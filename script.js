@@ -4,13 +4,16 @@ let bucketSizeLocked = false;
 let diretorio = [];
 let buckets = [];
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 class Bucket {
   constructor(id, pl) {
     this.id = id;
     this.chaves = [];
     this.pl = pl;
   }
-
+  
   cheio() {
     return this.chaves.length >= bucketSize;
   }
@@ -56,7 +59,7 @@ function atualizarVisuais() {
   });
 }
 
-function inserirChave() {
+async function inserirChave() {
   const chave = parseInt(document.getElementById("inputKey").value);
   if (isNaN(chave)) return;
 
@@ -66,85 +69,87 @@ function inserirChave() {
     document.getElementById("bucketSize").disabled = true;
   }
 
-  log(`->Inserindo chave ${chave}.`);
+  await log(`\n->Inserindo chave ${chave}.`);
   let bin = hashBinario(chave);
-  log(`Hash binário de ${chave} com profundidade ${profundidadeGlobal} é ${bin}.`); // LOG ADICIONADO
+  await log(`Hash binário de ${chave} com profundidade ${profundidadeGlobal} é ${bin}.`);
   let idx = parseInt(bin, 2);
   let bucket = diretorio[idx];
 
-  log(`Chave será direcionada ao índice ${idx}, apontando para o bucket ${bucket.id}.`); // LOG ADICIONADO
+  await log(`Chave será direcionada ao índice ${idx}, apontando para o bucket ${bucket.id}.`);
 
   if (bucket.cheio()) {
-    log(`Bucket ${bucket.id} está cheio. Iniciando processo de split...`); // LOG ADICIONADO
+    await log(`Bucket ${bucket.id} está cheio. Iniciando processo de split...`);
 
     if (bucket.pl === profundidadeGlobal) {
       profundidadeGlobal++;
       duplicarDiretorio();
-      log(`Profundidade local do bucket (${bucket.pl}) igual à profundidade global. Diretório duplicado para profundidade global ${profundidadeGlobal}.`); // LOG ADICIONADO
+      await log(`Profundidade local do bucket (${bucket.pl}) igual à profundidade global. Diretório duplicado para profundidade global ${profundidadeGlobal}.`);
     }
 
     const novoBucket = new Bucket(buckets.length, bucket.pl + 1);
     buckets.push(novoBucket);
     const oldId = bucket.id;
 
-    log(`Novo bucket ${novoBucket.id} criado com profundidade local ${novoBucket.pl}.`); // LOG ADICIONADO
+    await log(`Novo bucket ${novoBucket.id} criado com profundidade local ${novoBucket.pl}.`);
 
-    diretorio.forEach((b, i) => {
+    diretorio.forEach(async (b, i) => {
       if (b.id === oldId) {
         const bin = i.toString(2).padStart(profundidadeGlobal, '0');
         if (bin[bin.length - (bucket.pl + 1)] === '1') {
           diretorio[i] = novoBucket;
-          log(`Ponteiro ${bin} redirecionado do bucket ${oldId} para o novo bucket ${novoBucket.id}.`); // LOG ADICIONADO
+          await log(`Ponteiro ${bin} redirecionado do bucket ${oldId} para o novo bucket ${novoBucket.id}.`);
         }
       }
     });
 
     const chaves = bucket.removerTodos();
-    log(`Bucket ${oldId} esvaziado. Chaves removidas: ${chaves.join(", ")}`); // LOG ADICIONADO
+    await log(`Bucket ${oldId} esvaziado. Chaves removidas: ${chaves.join(", ")}`);
     bucket.pl++;
 
     for (const c of chaves) {
-      log(`Reposicionando chave ${c} após split...`); // LOG ADICIONADO
-      inserirNovaChave(c);
+      await log(`Reposicionando chave ${c} após split...`);
+      await inserirNovaChave(c);
     }
 
-    log(`Bucket ${oldId} dividido com sucesso. Inserindo novamente a chave ${chave}.`); // LOG ADICIONADO
-    inserirNovaChave(chave);
+    await log(`Bucket ${oldId} dividido com sucesso. Inserindo novamente a chave ${chave}.`);
+    await inserirNovaChave(chave);
   } else {
-    log(`Bucket ${bucket.id} ainda tem espaço. Inserindo chave diretamente.`); // LOG ADICIONADO
-    inserirNovaChave(chave);
+    await log(`Bucket ${bucket.id} ainda tem espaço. Inserindo chave diretamente.`);
+    await inserirNovaChave(chave);
   }
 
   atualizarVisuais();
   document.getElementById("inputKey").value = "";
 }
 
-function inserirNovaChave(chave) {
+async function inserirNovaChave(chave) {
   const bin = hashBinario(chave);
   const idx = parseInt(bin, 2);
   let bucket = diretorio[idx];
 
-  log(`Tentando inserir chave ${chave} no índice ${idx} (bin: ${bin}) → Bucket ${bucket.id}`); // LOG ADICIONADO
+  await log(`Tentando inserir chave ${chave} no índice ${idx} (bin: ${bin}) → Bucket ${bucket.id}`);
 
   if (!bucket.cheio()) {
     bucket.inserir(chave);
-    log(`Chave ${chave} inserida com sucesso no bucket ${bucket.id}.`); // LOG ADICIONADO
+    await log(`Chave ${chave} inserida com sucesso no bucket ${bucket.id}.`);
+    atualizarVisuais();
+    await sleep(2200);
     return;
   }
 
-  log(`Bucket ${bucket.id} está cheio ao tentar inserir chave ${chave}. Iniciando novo split.`); // LOG ADICIONADO
+  await log(`Bucket ${bucket.id} está cheio ao tentar inserir chave ${chave}. Iniciando novo split.`);
 
   if (bucket.pl === profundidadeGlobal) {
     profundidadeGlobal++;
     duplicarDiretorio();
-    log(`Profundidade global aumentada para ${profundidadeGlobal} após split.`); // LOG ADICIONADO
+    await log(`Profundidade global aumentada para ${profundidadeGlobal} após split.`);
   }
 
   const novoBucket = new Bucket(buckets.length, bucket.pl + 1);
   buckets.push(novoBucket);
   const antigoId = bucket.id;
 
-  log(`Novo bucket ${novoBucket.id} criado com profundidade local ${novoBucket.pl}. Atualizando ponteiros do diretório...`); // LOG ADICIONADO
+  await log(`Novo bucket ${novoBucket.id} criado com profundidade local ${novoBucket.pl}. Atualizando ponteiros do diretório...`);
 
   for (let i = 0; i < diretorio.length; i++) {
     const bin = i.toString(2).padStart(profundidadeGlobal, '0');
@@ -157,29 +162,33 @@ function inserirNovaChave(chave) {
       } else {
         diretorio[i] = novoBucket;
       }
-      log(`Ponteiro ${bin} agora aponta para bucket ${diretorio[i].id}.`); // LOG ADICIONADO
+      await log(`Ponteiro ${bin} agora aponta para bucket ${diretorio[i].id}.`);
     }
   }
 
   bucket.pl++;
-  log(`Profundidade local do bucket ${bucket.id} aumentada para ${bucket.pl}.`); // LOG ADICIONADO
+  await log(`Profundidade local do bucket ${bucket.id} aumentada para ${bucket.pl}.`);
 
   const chaves = bucket.removerTodos();
-  log(`Redistribuindo chaves do bucket ${antigoId}: ${chaves.join(", ")}`); // LOG ADICIONADO
+  await log(`Redistribuindo chaves do bucket ${antigoId}: ${chaves.join(", ")}`);
 
   for (const c of chaves) {
     const novoBin = hashBinario(c);
     const novoIdx = parseInt(novoBin, 2);
     diretorio[novoIdx].inserir(c);
-    log(`Chave ${c} inserida no bucket ${diretorio[novoIdx].id} após redistribuição.`); // LOG ADICIONADO
+    await log(`Chave ${c} inserida no bucket ${diretorio[novoIdx].id} após redistribuição.`);
+    atualizarVisuais();
+    await sleep(2200);
   }
 
-  log(`Bucket ${antigoId} dividido. Novo bucket ${novoBucket.id} criado.`); // LOG ADICIONADO
+  await log(`Bucket ${antigoId} dividido. Novo bucket ${novoBucket.id} criado.`);
 
   const finalBin = hashBinario(chave);
   const finalIdx = parseInt(finalBin, 2);
   diretorio[finalIdx].inserir(chave);
-  log(`Chave ${chave} inserida no bucket ${diretorio[finalIdx].id} após redistribuição.`); // LOG ADICIONADO
+  await log(`Chave ${chave} inserida no bucket ${diretorio[finalIdx].id} após redistribuição.`);
+  atualizarVisuais();
+  await sleep(2200);
 }
 
 
@@ -190,10 +199,11 @@ function duplicarDiretorio() {
   }
 }
 
-function log(msg) {
+async function log(msg, delay = 2200) {
   const logBox = document.getElementById("log");
   logBox.value += msg + "\n";
   logBox.scrollTop = logBox.scrollHeight;
+  await sleep(delay); 
 }
 
 function inicializar() {
@@ -207,6 +217,7 @@ function inicializar() {
   diretorio = [b0, b1];
 
   atualizarVisuais();
+  
 }
 
 function lockBucketSize() {
