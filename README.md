@@ -57,6 +57,3 @@ Os resultados foram satisfatórios, criando uma ferramenta que demonstra clarame
 
 ## Vídeo Demonstrativo
 [Incluir aqui o link para o vídeo de demonstração]
-
-## Licença
-Este projeto está licenciado sob a [MIT License](LICENSE).
