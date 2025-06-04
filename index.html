@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hash Extensível</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Hash Extensível</h1>
+
+  <div class="controls">
+    <label>
+      Inserir chave:
+      <input type="number" id="inputKey" />
+    </label>
+
+    <label>
+      Tamanho do Bucket:
+      <select id="bucketSize" onchange="lockBucketSize()">
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4" selected>4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+      </select>
+    </label>
+
+    <button onclick="inserirChave()">Inserir</button>
+  </div>
+
+  <div class="hash-container">
+    <div class="tabela" id="diretorio">
+      <h3>Diretório</h3>
+      <h2>P = 1</h2>
+    </div>
+
+    <div class="tabela" id="buckets">
+      <h3>Buckets</h3>
+    </div>
+  </div>
+
+  <h4>Log:</h4>
+  <textarea id="log" rows="10" readonly></textarea>
+
+  <script src="script.js"></script>
+</body>
+</html>
