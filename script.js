@@ -7,13 +7,14 @@ let buckets = [];
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
 class Bucket {
   constructor(id, pl) {
     this.id = id;
     this.chaves = [];
     this.pl = pl;
   }
-  
+
   cheio() {
     return this.chaves.length >= bucketSize;
   }
@@ -29,6 +30,11 @@ class Bucket {
   }
 }
 
+function toggleBotoes(disabled) {
+  document.querySelectorAll("button").forEach(btn => btn.disabled = disabled);
+}
+
+
 function hashBinario(chave) {
   return (chave % (1 << profundidadeGlobal)).toString(2).padStart(profundidadeGlobal, '0');
 }
@@ -40,8 +46,7 @@ function atualizarVisuais() {
   dirDiv.innerHTML = `<h3>Diretório</h3><h2>P = ${profundidadeGlobal}</h2>`;
   
   diretorio.forEach((b, i) => {
-    const bin = i.toString(2).padStart(profundidadeGlobal, '0');
-    dirDiv.innerHTML += `<div class="diretorio-item">${bin} → Bucket ${b.id}</div>`;
+    dirDiv.innerHTML += `<div class="diretorio-item">${i} → Bucket ${b.id}</div>`;
   });
 
   buckDiv.innerHTML = `<h3>Buckets</h3>`;
@@ -60,6 +65,7 @@ function atualizarVisuais() {
 }
 
 async function inserirChave() {
+  toggleBotoes(true);
   const chave = parseInt(document.getElementById("inputKey").value);
   if (isNaN(chave)) return;
 
@@ -69,13 +75,12 @@ async function inserirChave() {
     document.getElementById("bucketSize").disabled = true;
   }
 
-  await log(`\n->Inserindo chave ${chave}.`);
-  let bin = hashBinario(chave);
-  await log(`Hash binário de ${chave} com profundidade ${profundidadeGlobal} é ${bin}.`);
-  let idx = parseInt(bin, 2);
+  await log(`\n-> Inserindo chave ${chave}.`);
+  let idx = chave % (1 << profundidadeGlobal);
   let bucket = diretorio[idx];
 
-  await log(`Chave será direcionada ao índice ${idx}, apontando para o bucket ${bucket.id}.`);
+  await log(`Hash de ${chave} com profundidade ${profundidadeGlobal} resulta no índice ${idx}.`);
+  await log(`Chave será direcionada ao índice ${idx}, que aponta para o bucket ${bucket.id}.`);
 
   if (bucket.cheio()) {
     await log(`Bucket ${bucket.id} está cheio. Iniciando processo de split...`);
@@ -92,15 +97,15 @@ async function inserirChave() {
 
     await log(`Novo bucket ${novoBucket.id} criado com profundidade local ${novoBucket.pl}.`);
 
-    diretorio.forEach(async (b, i) => {
-      if (b.id === oldId) {
+    for (let i = 0; i < diretorio.length; i++) {
+      if (diretorio[i].id === oldId) {
         const bin = i.toString(2).padStart(profundidadeGlobal, '0');
         if (bin[bin.length - (bucket.pl + 1)] === '1') {
           diretorio[i] = novoBucket;
-          await log(`Ponteiro ${bin} redirecionado do bucket ${oldId} para o novo bucket ${novoBucket.id}.`);
+          await log(`Ponteiro ${i} redirecionado do bucket ${oldId} para o novo bucket ${novoBucket.id}.`);
         }
       }
-    });
+    }
 
     const chaves = bucket.removerTodos();
     await log(`Bucket ${oldId} esvaziado. Chaves removidas: ${chaves.join(", ")}`);
@@ -119,15 +124,15 @@ async function inserirChave() {
   }
 
   atualizarVisuais();
+  toggleBotoes(false);
   document.getElementById("inputKey").value = "";
 }
 
 async function inserirNovaChave(chave) {
-  const bin = hashBinario(chave);
-  const idx = parseInt(bin, 2);
+  const idx = chave % (1 << profundidadeGlobal);
   let bucket = diretorio[idx];
 
-  await log(`Tentando inserir chave ${chave} no índice ${idx} (bin: ${bin}) → Bucket ${bucket.id}`);
+  await log(`Tentando inserir chave ${chave} no índice ${idx} → Bucket ${bucket.id}`);
 
   if (!bucket.cheio()) {
     bucket.inserir(chave);
@@ -153,7 +158,6 @@ async function inserirNovaChave(chave) {
 
   for (let i = 0; i < diretorio.length; i++) {
     const bin = i.toString(2).padStart(profundidadeGlobal, '0');
-    const prefixo = bin.substring(0, bucket.pl);
     const bitCritico = bin[bucket.pl];
 
     if (diretorio[i].id === antigoId) {
@@ -162,7 +166,7 @@ async function inserirNovaChave(chave) {
       } else {
         diretorio[i] = novoBucket;
       }
-      await log(`Ponteiro ${bin} agora aponta para bucket ${diretorio[i].id}.`);
+      await log(`Ponteiro ${i} agora aponta para bucket ${diretorio[i].id}.`);
     }
   }
 
@@ -173,8 +177,7 @@ async function inserirNovaChave(chave) {
   await log(`Redistribuindo chaves do bucket ${antigoId}: ${chaves.join(", ")}`);
 
   for (const c of chaves) {
-    const novoBin = hashBinario(c);
-    const novoIdx = parseInt(novoBin, 2);
+    const novoIdx = c % (1 << profundidadeGlobal);
     diretorio[novoIdx].inserir(c);
     await log(`Chave ${c} inserida no bucket ${diretorio[novoIdx].id} após redistribuição.`);
     atualizarVisuais();
@@ -183,20 +186,54 @@ async function inserirNovaChave(chave) {
 
   await log(`Bucket ${antigoId} dividido. Novo bucket ${novoBucket.id} criado.`);
 
-  const finalBin = hashBinario(chave);
-  const finalIdx = parseInt(finalBin, 2);
+  const finalIdx = chave % (1 << profundidadeGlobal);
   diretorio[finalIdx].inserir(chave);
   await log(`Chave ${chave} inserida no bucket ${diretorio[finalIdx].id} após redistribuição.`);
   atualizarVisuais();
   await sleep(2200);
 }
 
-
 function duplicarDiretorio() {
   const tamanhoAtual = diretorio.length;
   for (let i = 0; i < tamanhoAtual; i++) {
     diretorio.push(diretorio[i]);
   }
+}
+
+async function buscarChave() {
+  toggleBotoes(true);
+  const chave = parseInt(document.getElementById("inputKey").value);
+  if (isNaN(chave)) return;
+
+  await log(`\n-> Buscando chave ${chave}...`);
+
+  const idx = chave % (1 << profundidadeGlobal);
+  const bucket = diretorio[idx];
+
+  await log(`Hash de ${chave} com profundidade ${profundidadeGlobal} resulta no índice ${idx}.`);
+  await log(`Verificando no índice ${idx}, que aponta para o bucket ${bucket.id}.`);
+  await sleep(2200);
+
+  const chavesBucket = bucket.chaves.join(", ") || "vazio";
+  await log(`Bucket ${bucket.id} contém as chaves: ${chavesBucket}.`);
+  await sleep(2200);
+
+  if (bucket.chaves.includes(chave)) {
+    await log(`✅ Chave ${chave} encontrada no bucket ${bucket.id}.`);
+  } else {
+    await log(`❌ Chave ${chave} não encontrada no bucket ${bucket.id}.`);
+  }
+
+  toggleBotoes(false);
+  document.getElementById("inputKey").value = "";
+}
+
+function limparTabela() {
+  bucketSizeLocked = false;
+  document.getElementById("bucketSize").disabled = false;
+  document.getElementById("log").value = "";
+
+  inicializar();
 }
 
 async function log(msg, delay = 2200) {
@@ -217,7 +254,6 @@ function inicializar() {
   diretorio = [b0, b1];
 
   atualizarVisuais();
-  
 }
 
 function lockBucketSize() {
