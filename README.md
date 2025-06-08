@@ -49,7 +49,7 @@ A ferramenta foi desenvolvida usando **HTML, CSS e JavaScript puro**, sem biblio
 
 ## Relato de Experiência
 
-ImplementEI todos os requisitos básicos e avançados da estrutura hash extensível, incluindo:
+Implemenei todos os requisitos básicos e avançados da estrutura hash extensível, incluindo:
 
 - Inserção com tratamento de colisões e redistribuição automática
 - Crescimento dinâmico do diretório e dos buckets
