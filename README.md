@@ -64,15 +64,15 @@ O maior desafio foi garantir a redistribuição correta das chaves durante os sp
 
 ## Checklist
 
-- [x] A visualização interativa da Tabela Hash Extensível foi criada? SIM
-- [x] O diretório está visualmente alinhado com os buckets? SIM
-- [x] O botão de busca funciona corretamente e registra as ações no log? SIM
-- [x] O botão "Clear" reinicia a estrutura e limpa o log? SIM
-- [x] Os botões são desabilitados durante as operações? SIM
-- [x] Há um vídeo de até 2 minutos demonstrando o uso da visualização? SIM
-- [x] O trabalho está funcionando corretamente? SIM
-- [x] O trabalho está completo? SIM
-- [x] O trabalho é original e não uma cópia de um colega? SIM
+- [x] A visualização interativa da Tabela Hash Extensível foi criada? **SIM**
+- [x] O diretório está visualmente alinhado com os buckets? **SIM**
+- [x] O botão de busca funciona corretamente e registra as ações no log? **SIM**
+- [x] O botão "Clear" reinicia a estrutura e limpa o log? **SIM**
+- [x] Os botões são desabilitados durante as operações? **SIM**
+- [x] Há um vídeo de até 2 minutos demonstrando o uso da visualização? **SIM**
+- [x] O trabalho está funcionando corretamente? **SIM**
+- [x] O trabalho está completo? **SIM**
+- [x] O trabalho é original e não uma cópia de um colega? **SIM**
 
 ---
 
